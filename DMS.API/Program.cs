@@ -3,54 +3,52 @@ using DMS.API.Extension;
 using DMS.API;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
+using AutoMapper;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var services = builder.Services;
+var configuration = builder.Configuration;
+
 // Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+services.AddControllers();
+services.AddEndpointsApiExplorer();
 
-builder.Services.AddServices(builder.Configuration);
+services.AddServices(configuration);
+services.AddDependency(configuration);
+services.AddDistributedMemoryCache();
 
-builder.Services.AddDependency(builder.Configuration);
+services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+});
+
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.AddAssociatedConfiguration();
-builder.Services.AddDistributedMemoryCache();
-
-
-//builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-//    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
 
 var app = builder.Build();
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    //app.UseSwaggerUI(c =>
-    //{
-    //    //c.OAuthAppName("Document Management");
-    //    //c.OAuthScopeSeparator(" ");
-    //    //c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None); // Options: None, List, Full
-    //    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-    //    c.RoutePrefix = string.Empty; // Set to empty to serve Swagger UI at root (e.g., http://localhost:5000/)
-    //});
 }
 
-app.UseCors(builder =>
-{
-    builder.AllowAnyOrigin()
-           .AllowAnyMethod()
-           .AllowAnyHeader();
-});
-
-app.UseHttpLogging();
 app.UseHttpsRedirection();
+app.UseHttpLogging();
+
+app.UseRouting();
+
+app.UseCors("AllowAllOrigins");
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();

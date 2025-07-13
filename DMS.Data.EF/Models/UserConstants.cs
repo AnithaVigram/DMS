@@ -1,6 +1,4 @@
-﻿using DMS.Data.EF.Models;
-
-namespace DMS.API.Model;
+﻿namespace DMS.Data.EF.Models;
 
 public class UserConstants
 {

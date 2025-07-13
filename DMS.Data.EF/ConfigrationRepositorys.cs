@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using DMS.Data.EF.Query;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DMS.Data.EF;
@@ -7,6 +8,7 @@ public static class ConfigrationRepositorys
 {
     public static IServiceCollection DataEFDependencyRegister(this IServiceCollection service, IConfiguration configuration)
     {
+        service.AddScoped<GeneralQueries>();
         service.BaseDBDependencyRegister(configuration);
 
         return service;

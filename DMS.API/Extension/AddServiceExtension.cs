@@ -9,6 +9,8 @@ using System.Text;
 
 using DMS.Data.EF;
 using DMS.Data.EF.Context;
+using Microsoft.Identity.Web;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 namespace DMS.API.Extension;
 
@@ -56,7 +58,16 @@ public static class AddServiceExtension
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+        //services.AddSwaggerGen();
+
+        //Add authentication in Swagger
+        services.AddSwaggerGen(opt => {
+            opt.SwaggerDoc("v1", new OpenApiInfo { Title = "DMS", Version = "v1" });
+            opt.AddServer(new OpenApiServer { Url = "https://localhost:7151" }); // or your actual URL
+            opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme { In = ParameterLocation.Header, Description = "Please enter token", Name = "Authorization", Type = SecuritySchemeType.Http, BearerFormat = "JWT", Scheme = "bearer" });
+            opt.AddSecurityRequirement(new OpenApiSecurityRequirement { { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, Array.Empty<string>() } });
+        });
+
     }
 
     public static void AddDBContext(IServiceCollection services, IConfiguration configuration)
@@ -78,28 +89,35 @@ public static class AddServiceExtension
 
     public static void AddJWTToken(IServiceCollection services, IConfiguration configuration)
     {
-        //JWT Authentication
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
-            options.RequireHttpsMetadata = false;
-            options.SaveToken = true;
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = configuration["Jwt:Issuer"],
-                ValidAudience = configuration["Jwt:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
-            };
-        });
+        var initialScope = configuration.GetValue<string>("AzureAd:Scope")?.Split(' ');
+        services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+           .AddMicrosoftIdentityWebApp(configuration.GetSection("AzureAd"))
+           .EnableTokenAcquisitionToCallDownstreamApi(initialScope)
+              .AddInMemoryTokenCaches();
 
-        //Add authentication in Swagger
-        services.AddSwaggerGen(opt => {
-            opt.SwaggerDoc("v1", new OpenApiInfo { Title = "API Sample", Version = "v1" });
-            opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme { In = ParameterLocation.Header, Description = "Please enter token", Name = "Authorization", Type = SecuritySchemeType.Http, BearerFormat = "JWT", Scheme = "bearer" });
-            opt.AddSecurityRequirement(new OpenApiSecurityRequirement { { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, Array.Empty<string>() } });
-        });
+        //JWT Authentication
+        //services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        //    .AddJwtBearer(options => {
+        //    options.RequireHttpsMetadata = false;
+        //    options.SaveToken = true;
+        //    options.TokenValidationParameters = new TokenValidationParameters
+        //    {
+        //        ValidateIssuer = true,
+        //        ValidateAudience = true,
+        //        ValidateLifetime = true,
+        //        ValidateIssuerSigningKey = true,
+        //        ValidIssuer = configuration["Jwt:Issuer"],
+        //        ValidAudience = configuration["Jwt:Audience"],
+        //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
+        //    };
+        //})
+
+        ////Add authentication in Swagger
+        //services.AddSwaggerGen(opt => {
+        //    opt.SwaggerDoc("v1", new OpenApiInfo { Title = "API Sample", Version = "v1" });
+        //    opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme { In = ParameterLocation.Header, Description = "Please enter token", Name = "Authorization", Type = SecuritySchemeType.Http, BearerFormat = "JWT", Scheme = "bearer" });
+        //    opt.AddSecurityRequirement(new OpenApiSecurityRequirement { { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, Array.Empty<string>() } });
+        //});
 
     }
 
@@ -138,11 +156,11 @@ public static class AddServiceExtension
         services.AddCors(options =>
         {
             options.AddPolicy("AllowAllOrigins",
-                builder =>
+                policy =>
                 {
-                    builder.AllowAnyOrigin()  // WithOrigins(allowedCorsOrigin)
-                           .AllowAnyMethod()
-                           .AllowAnyHeader();
+                    policy.AllowAnyOrigin()  // WithOrigins(allowedCorsOrigin)
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
                 });
         });
     }

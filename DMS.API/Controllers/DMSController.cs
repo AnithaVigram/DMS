@@ -3,10 +3,11 @@ using DMS.Application;
 using DMS.Data.EF.Models;
 using DMS.Application.Interface;
 using Microsoft.AspNetCore.Authorization;
+using DMS.Data.EF.Query;
 
 namespace DMS.API.Controllers
 {
-    // [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class DMSController : ControllerBase
@@ -20,8 +21,17 @@ namespace DMS.API.Controllers
             _logger = logger;
         }
 
+        [HttpGet("GetTreeViewManualList")]
+        public async Task<ActionResult<List<DmManual_Treeview>>> GetTreeViewManualList()
+        {
+            _logger.LogInformation("Get Treeview Manual list");
+            var manualList = await _service.GetTreeViewManualListAsync(); // Await the async method
+            
+            return Ok(manualList);
+        }
+
         [HttpPost]
-        public async Task<ActionResult> PostDM_Manual(DmManual manual) // Mark method as async
+        public async Task<ActionResult> PostDM_Manual(DmManualDto manual) // Mark method as async
         {
             // Validation
             // Checking

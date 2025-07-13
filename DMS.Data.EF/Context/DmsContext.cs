@@ -12,7 +12,8 @@ public partial class DmsContext : DbContext
     {
         _dbActions = dbActions;
     }
-
+    
+    public DbSet<DmManual_Treeview> DmManual_Treeview { get; set; } = null!;
 
     public virtual DbSet<DmManual> DmManuals { get; set; }
 

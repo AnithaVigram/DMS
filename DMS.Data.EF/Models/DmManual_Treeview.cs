@@ -1,17 +1,22 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace DMS.Data.EF.Models;
 
-public partial class DmManual
+[Keyless]
+public class DmManual_Treeview
 {
-    public long DmManualId { get; set; }
+    public long Dm_ManualId { get; set; }
 
     public string Origin { get; set; } = null!;
 
     public int VesselId { get; set; }
 
-    public long DmManualCategoryId { get; set; }
+    public string DmManualCategory { get; set; } = null!;
 
     public int ManualNo { get; set; }
 
@@ -19,11 +24,9 @@ public partial class DmManual
 
     public string ManualName { get; set; } = null!;
 
-    public float Version { get; set; }
-
     public string? TextContents { get; set; } = null!;
 
-    public long DmManualStatusId { get; set; }
+    public string StatusString { get; set; } = null!;
 
     public long ParentId { get; set; }
 
